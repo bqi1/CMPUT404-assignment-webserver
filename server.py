@@ -25,14 +25,48 @@ import socketserver
 # run: python freetests.py
 
 # try: curl -v -X GET http://127.0.0.1:8080/
-
+import os
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+
+        if b"POST" in self.data or b"PUT" in self.data or b"DELETE" in self.data:
+            self.request.sendall(bytearray("""HTTP/1.1 405 Method Not Allowed\n""",'utf-8'))
+            # self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
+            # self.request.sendall(bytearray("""\n""",'utf-8'))
+            # self.request.sendall(bytearray("""
+            #         <html>
+            #         <body>
+            #         <h1>405 Method Not Allowed!</h1>
+            #         </body>
+            #         </html>
+            # """,'utf-8'))
+            return
+
+        # self.request.sendall(bytearray("OK",'utf-8'))
+        # print(os.path.realpath("www//index.html").encode())
+        # self.request.sendall(os.path.realpath("www//index.html").encode())
+        self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
+        self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
+        self.request.sendall(bytearray("""\n""",'utf-8'))
+    #     self.request.sendall(bytearray("""
+    # <html>
+    # <body>
+    # <h1>Hello World</h1> this is my server!
+    # </body>
+    # </html>
+    #     """,'utf-8'))
+
+        # Generic index.html file sent
+        generic_file = open(os.getcwd()+"""\\www\\index.html""").read()
+        self.request.sendall(bytearray(generic_file,'utf-8'))
+
+        # if os.path.exists(os.getcwd()+'\\www\\index.html'):
+        #     print("I found something?")
+        # else:
+        #     print("na")
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
@@ -40,7 +74,7 @@ if __name__ == "__main__":
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
     server = socketserver.TCPServer((HOST, PORT), MyWebServer)
-
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
     server.serve_forever()
+
