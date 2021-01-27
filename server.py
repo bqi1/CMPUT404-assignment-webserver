@@ -31,7 +31,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-
         if b"POST" in self.data or b"PUT" in self.data or b"DELETE" in self.data:
             self.request.sendall(bytearray("""HTTP/1.1 405 Method Not Allowed\n""",'utf-8'))
             # self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
@@ -44,22 +43,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
             #         </html>
             # """,'utf-8'))
             return
+        url = self.data.decode("utf-8").split()[1] # From Ethan Hill on https://stackoverflow.com/questions/53163366/python-simple-socket-get-url-from-client-request at 2021-01-27
+        if url[-1:] != "/":
+            self.request.sendall(bytearray(f"""HTTP/1.1 301 Moved Permanently
+Location: {url}/\n""",'utf-8')) # Must use 301 to correct paths
+            return
 
-        # self.request.sendall(bytearray("OK",'utf-8'))
-        # print(os.path.realpath("www//index.html").encode())
-        # self.request.sendall(os.path.realpath("www//index.html").encode())
         self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
         self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
         self.request.sendall(bytearray("""\n""",'utf-8'))
-    #     self.request.sendall(bytearray("""
-    # <html>
-    # <body>
-    # <h1>Hello World</h1> this is my server!
-    # </body>
-    # </html>
-    #     """,'utf-8'))
-
-        # Generic index.html file sent
         generic_file = open(os.getcwd()+"""\\www\\index.html""").read()
         self.request.sendall(bytearray(generic_file,'utf-8'))
 
