@@ -42,7 +42,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         url = self.data.decode("utf-8").split()[1] # From Ethan Hill on https://stackoverflow.com/questions/53163366/python-simple-socket-get-url-from-client-request at 2021-01-27
         # The webserver can server 404 errors for paths not found
         if not os.path.exists(root_path+url):
-            print(f"{root_path+url} DOES NOT EXIST\n")
             self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\n""",'utf-8')) # 404 errors for paths not found
             return
         
