@@ -33,9 +33,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         if self.data == b"": return
         root_path = os.getcwd()+"/www" # The webserver can serve files from ./www
-
-        
-
         # print ("Got a request of: %s\n" % self.data)
         
         # Return a status code of “405 Method Not Allowed” for any method you cannot handle (POST/PUT/DELETE)
@@ -43,14 +40,13 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.request.sendall(bytearray("""HTTP/1.1 405 Method Not Allowed\n""",'utf-8'))
             return
         url = self.data.decode("utf-8").split()[1] # From Ethan Hill on https://stackoverflow.com/questions/53163366/python-simple-socket-get-url-from-client-request at 2021-01-27
-        if url.endswith(".css/") or url.endswith(".html/"):
+        if url.endswith(".css/") or url.endswith(".html/"): # In rare cases where there's a get request for a css/html file with an ending /
             url = url[:-1]
 
         # The webserver can server 404 errors for paths not found
-
         if not os.path.exists(root_path+url):
-            self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\n""",'utf-8')) # 404 errors for paths not found
-            print(f"{root_path+url} doesnt exist")
+            self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\n\nConnection: close\n\n""",'utf-8')) # 404 errors for paths not found
+            # print(f"{root_path+url} doesnt exist")
             return
         
         if url[-1] != "/" and os.path.isdir(root_path+url+"/"):
@@ -70,6 +66,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
             self.request.sendall(bytearray("""\n""",'utf-8'))
             self.request.sendall(bytearray(self.getContent(url,root_path),'utf-8'))
+            return
 
         # The webserver supports mime-types for CSS
         # The webserver can serve CSS properly so that the front page has an orange h1 header.
