@@ -34,16 +34,23 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if self.data == b"": return
         root_path = os.getcwd()+"/www" # The webserver can serve files from ./www
 
+        
+
         # print ("Got a request of: %s\n" % self.data)
         
         # Return a status code of “405 Method Not Allowed” for any method you cannot handle (POST/PUT/DELETE)
-        if "GET" not in self.data.decode("utf-8").split()[0]:
+        if "GET" != self.data.decode("utf-8").split()[0]:
             self.request.sendall(bytearray("""HTTP/1.1 405 Method Not Allowed\n""",'utf-8'))
             return
         url = self.data.decode("utf-8").split()[1] # From Ethan Hill on https://stackoverflow.com/questions/53163366/python-simple-socket-get-url-from-client-request at 2021-01-27
+        if url.endswith(".css/") or url.endswith(".html/"):
+            url = url[:-1]
+
         # The webserver can server 404 errors for paths not found
+
         if not os.path.exists(root_path+url):
             self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\n""",'utf-8')) # 404 errors for paths not found
+            print(f"{root_path+url} doesnt exist")
             return
         
         if url[-1] != "/" and os.path.isdir(root_path+url+"/"):
