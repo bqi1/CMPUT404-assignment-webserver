@@ -30,38 +30,55 @@ import os
 class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        if b"POST" in self.data or b"PUT" in self.data or b"DELETE" in self.data:
+        if self.data == b"": return
+        root_path = os.getcwd()+"/www" # The webserver can serve files from ./www
+
+        # print ("Got a request of: %s\n" % self.data)
+        
+        # Return a status code of “405 Method Not Allowed” for any method you cannot handle (POST/PUT/DELETE)
+        if "GET" not in self.data.decode("utf-8").split()[0]:
             self.request.sendall(bytearray("""HTTP/1.1 405 Method Not Allowed\n""",'utf-8'))
-            # self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
-            # self.request.sendall(bytearray("""\n""",'utf-8'))
-            # self.request.sendall(bytearray("""
-            #         <html>
-            #         <body>
-            #         <h1>405 Method Not Allowed!</h1>
-            #         </body>
-            #         </html>
-            # """,'utf-8'))
             return
         url = self.data.decode("utf-8").split()[1] # From Ethan Hill on https://stackoverflow.com/questions/53163366/python-simple-socket-get-url-from-client-request at 2021-01-27
-        if url[-1:] != "/":
-            self.request.sendall(bytearray(f"""HTTP/1.1 301 Moved Permanently
-Location: {url}/\n""",'utf-8')) # Must use 301 to correct paths
+        # The webserver can server 404 errors for paths not found
+        if not os.path.exists(root_path+url):
+            print(f"{root_path+url} DOES NOT EXIST\n")
+            self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\n""",'utf-8')) # 404 errors for paths not found
+            return
+        
+        if url[-1] != "/" and os.path.isdir(root_path+url+"/"):
+            self.request.sendall(bytearray(f"""HTTP/1.1 301 Moved Permanently\nLocation: {url}/\n""",'utf-8')) # Must use 301 to correct paths
             return
 
-        self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
-        self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
-        self.request.sendall(bytearray("""\n""",'utf-8'))
-        generic_file = open(os.getcwd()+"""\\www\\index.html""").read()
-        self.request.sendall(bytearray(generic_file,'utf-8'))
+        # The webserver can return index.html from directories (paths that end in /)
+        if url[-1] == "/" and os.path.isdir(root_path+url):
+            self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
+            self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
+            self.request.sendall(bytearray("""\n""",'utf-8'))
+            self.request.sendall(bytearray(self.getContent(url+"/index.html",root_path),'utf-8'))
 
-        # if os.path.exists(os.getcwd()+'\\www\\index.html'):
-        #     print("I found something?")
-        # else:
-        #     print("na")
+        # The webserver supports mime-types for HTML
+        if ".html" in url:
+            self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
+            self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
+            self.request.sendall(bytearray("""\n""",'utf-8'))
+            self.request.sendall(bytearray(self.getContent(url,root_path),'utf-8'))
+
+        # The webserver supports mime-types for CSS
+        # The webserver can serve CSS properly so that the front page has an orange h1 header.
+        if ".css" in url:
+            self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
+            self.request.sendall(bytearray("""Content-Type: text/css\n""",'utf-8'))
+            self.request.sendall(bytearray("""\n""",'utf-8'))
+            self.request.sendall(bytearray(self.getContent(url,root_path),'utf-8'))
+            return
+
+    def getContent(self,name,path):
+        return open(path+name).read()
+
 
 if __name__ == "__main__":
-    HOST, PORT = "localhost", 8080
+    HOST, PORT = "127.0.0.1", 8080 #  The webserver works with Firefox and Chromium
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
@@ -69,4 +86,3 @@ if __name__ == "__main__":
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
     server.serve_forever()
-
