@@ -30,7 +30,7 @@ import os
 
 class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
-        self.data = self.request.recv(1024).strip()
+        self.data = self.request.recv(4096).strip()
         if self.data == b"": return
         root_path = os.getcwd()+"/www" # The webserver can serve files from ./www
         # print ("Got a request of: %s\n" % self.data)
@@ -45,7 +45,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         # The webserver can server 404 errors for paths not found
         if not os.path.exists(root_path+url):
-            self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\n\nConnection: close\n\n""",'utf-8')) # 404 errors for paths not found
+            self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\nConnection: close\n\n""",'utf-8')) # 404 errors for paths not found
             # print(f"{root_path+url} doesnt exist")
             return
         
