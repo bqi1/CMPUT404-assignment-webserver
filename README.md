@@ -29,3 +29,5 @@ compatible) http://docs.python.org/2/library/socketserver.html
 
 Collaborated with Hongfang Xu. CCID is hongfang
 
+Used code from Ethan Hill on https://stackoverflow.com/questions/53163366/python-simple-socket-get-url-from-client-request at 2021-01-27 to extract urls from requests
+
