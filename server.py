@@ -44,7 +44,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             url = url[:-1]
 
         # The webserver can server 404 errors for paths not found
-        requested_path = os.path.realpath(root_path+url)
+        requested_path = os.path.realpath(root_path+url) # Code from blaze at https://stackoverflow.com/questions/3812849/how-to-check-whether-a-directory-is-a-sub-directory-of-another-directory at 2021-01-28
         if not requested_path.startswith(os.path.realpath(root_path)): # Cannot go further back past /www
             self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\nConnection: close\n\n""",'utf-8')) # 404 errors for paths not found
             # print(f"{root_path+url} doesnt exist :(")
