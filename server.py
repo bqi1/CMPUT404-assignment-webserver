@@ -44,25 +44,30 @@ class MyWebServer(socketserver.BaseRequestHandler):
             url = url[:-1]
 
         # The webserver can server 404 errors for paths not found
-        if not os.path.exists(root_path+url):
+        requested_path = os.path.realpath(root_path+url)
+        if not requested_path.startswith(os.path.realpath(root_path)): # Cannot go further back past /www
             self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\nConnection: close\n\n""",'utf-8')) # 404 errors for paths not found
-            # print(f"{root_path+url} doesnt exist")
+            # print(f"{root_path+url} doesnt exist :(")
+            return
+        if not os.path.exists(root_path+url): # Cannot be an illegal path
+            self.request.sendall(bytearray(f"""HTTP/1.1 404 Not Found\nConnection: close\n\n""",'utf-8')) # 404 errors for paths not found
+            # print(f"{root_path+url} doesnt exist :(")
             return
         
         if url[-1] != "/" and os.path.isdir(root_path+url+"/"):
-            self.request.sendall(bytearray(f"""HTTP/1.1 301 Moved Permanently\nLocation: {url}/\n\n""",'utf-8')) # Must use 301 to correct paths
+            self.request.sendall(bytearray(f"""HTTP/1.1 301 Moved Permanently\nLocation: {url}/\nConnection: close\n\n""",'utf-8')) # Must use 301 to correct paths
             return
 
         # The webserver can return index.html from directories (paths that end in /)
         if url[-1] == "/" and os.path.isdir(root_path+url):
-            self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
+            self.request.sendall(bytearray("""HTTP/1.1 200 OK\nConnection: close\n""",'utf-8'))
             self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
             self.request.sendall(bytearray("""\n""",'utf-8'))
             self.request.sendall(bytearray(self.getContent(url+"/index.html",root_path),'utf-8'))
 
         # The webserver supports mime-types for HTML
         if ".html" in url:
-            self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
+            self.request.sendall(bytearray("""HTTP/1.1 200 OK\nConnection: close\n""",'utf-8'))
             self.request.sendall(bytearray("""Content-Type: text/html\n""",'utf-8'))
             self.request.sendall(bytearray("""\n""",'utf-8'))
             self.request.sendall(bytearray(self.getContent(url,root_path),'utf-8'))
@@ -71,7 +76,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # The webserver supports mime-types for CSS
         # The webserver can serve CSS properly so that the front page has an orange h1 header.
         if ".css" in url:
-            self.request.sendall(bytearray("""HTTP/1.1 200 OK\n""",'utf-8'))
+            self.request.sendall(bytearray("""HTTP/1.1 200 OK\nConnection: close\n""",'utf-8'))
             self.request.sendall(bytearray("""Content-Type: text/css\n""",'utf-8'))
             self.request.sendall(bytearray("""\n""",'utf-8'))
             self.request.sendall(bytearray(self.getContent(url,root_path),'utf-8'))
